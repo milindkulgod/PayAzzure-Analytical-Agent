@@ -50,26 +50,9 @@ function buildLayout(spec: ChartSpec, theme: "dark" | "light") {
 }
 
 export function ChartCard({ spec, index }: { spec: ChartSpec; index: number }) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<any>(null);
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(() => {
-      const gd = plotRef.current?.el;
-      if (!gd) return;
-      import("plotly.js-dist-min").then((Plotly) => {
-        try {
-          Plotly.Plots.resize(gd);
-        } catch {}
-      });
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   function download() {
     const gd = plotRef.current?.el;
@@ -86,7 +69,7 @@ export function ChartCard({ spec, index }: { spec: ChartSpec; index: number }) {
 
   return (
     <>
-      <div ref={containerRef} className="card chart-resizable flex flex-col gap-2 p-3">
+      <div className="card flex flex-col gap-2 p-3 h-[460px]">
         <div className="flex-1 min-h-0">
           <Plot
             ref={plotRef}
