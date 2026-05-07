@@ -20,6 +20,13 @@ export type SessionPayload = {
   messages: ChatMessage[];
 };
 
+export type ModelOption = {
+  id: string;
+  label: string;
+  hint: string;
+  default: boolean;
+};
+
 function token(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
@@ -75,13 +82,18 @@ export async function uploadFile(file: File) {
   return handle<{ file: FileMeta }>(r);
 }
 
-export async function sendChat(message: string) {
+export async function sendChat(message: string, model?: string) {
   const r = await fetch(`${BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, model }),
   });
   return handle<{ message: ChatMessage }>(r);
+}
+
+export async function getModels() {
+  const r = await fetch(`${BASE}/api/models`, { headers: authHeaders() });
+  return handle<{ models: ModelOption[] }>(r);
 }
 
 export async function resetChat() {

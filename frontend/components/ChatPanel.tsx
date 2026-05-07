@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { sendChat, resetChat, type ChatMessage } from "@/lib/api";
+import {
+  getModels,
+  resetChat,
+  sendChat,
+  type ChatMessage,
+  type ModelOption,
+} from "@/lib/api";
 import { ChartCard } from "./ChartCard";
+
+const MODEL_PREF_KEY = "preferred_model";
 
 export function ChatPanel({
   initial,
@@ -14,7 +22,21 @@ export function ChatPanel({
   const [messages, setMessages] = useState<ChatMessage[]>(initial);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [model, setModel] = useState<string>("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getModels()
+      .then(({ models }) => {
+        setModels(models);
+        const saved = typeof window !== "undefined" ? localStorage.getItem(MODEL_PREF_KEY) : null;
+        const valid = saved && models.some((m) => m.id === saved) ? saved : null;
+        const fallback = models.find((m) => m.default)?.id ?? models[0]?.id ?? "";
+        setModel(valid ?? fallback);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,6 +51,11 @@ export function ChatPanel({
     onChartsUpdated(all);
   }, [messages, onChartsUpdated]);
 
+  function onModelChange(id: string) {
+    setModel(id);
+    if (typeof window !== "undefined") localStorage.setItem(MODEL_PREF_KEY, id);
+  }
+
   async function send() {
     const text = input.trim();
     if (!text || busy) return;
@@ -37,7 +64,7 @@ export function ChatPanel({
     setMessages((m) => [...m, userMsg]);
     setBusy(true);
     try {
-      const { message } = await sendChat(text);
+      const { message } = await sendChat(text, model || undefined);
       setMessages((m) => [...m, message]);
     } catch (e: any) {
       setMessages((m) => [
@@ -53,6 +80,8 @@ export function ChatPanel({
     await resetChat();
     setMessages([]);
   }
+
+  const activeModel = models.find((m) => m.id === model);
 
   return (
     <div className="card flex flex-col h-full">
@@ -75,23 +104,45 @@ export function ChatPanel({
         {busy && <p className="text-sm text-muted">Thinking…</p>}
         <div ref={endRef} />
       </div>
-      <div className="border-t border-border p-3 flex gap-2">
-        <input
-          className="input"
-          placeholder="Ask about your documents…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          disabled={busy}
-        />
-        <button className="btn-primary" onClick={send} disabled={busy}>
-          Send
-        </button>
+      <div className="border-t border-border p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <input
+            className="input"
+            placeholder="Ask about your documents…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            disabled={busy}
+          />
+          <button className="btn-primary" onClick={send} disabled={busy}>
+            Send
+          </button>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <label className="flex items-center gap-2 text-xs text-muted">
+            Model
+            <select
+              className="bg-panel border border-border rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-accent"
+              value={model}
+              onChange={(e) => onModelChange(e.target.value)}
+              disabled={busy || models.length === 0}
+            >
+              {models.length === 0 && <option value="">Loading…</option>}
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                  {m.default ? " (default)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          {activeModel && <span className="text-xs text-muted truncate">{activeModel.hint}</span>}
+        </div>
       </div>
     </div>
   );

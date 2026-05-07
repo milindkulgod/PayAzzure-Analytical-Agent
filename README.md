@@ -23,7 +23,7 @@ Lightweight, demo-able pilot of an AI-powered document analytics tool. No databa
 - **Frontend:** Next.js 14 (App Router) + Tailwind + react-plotly.js
 - **Backend:** FastAPI + Anthropic SDK + pdfplumber / openpyxl / python-docx
 - **Storage:** local JSON + filesystem (swappable behind `app/store.py:Store`)
-- **LLM:** Claude (default `claude-sonnet-4-6`); pluggable behind `app/llm.py:LLMClient`
+- **LLM:** Claude — Haiku 4.5 by default for speed/cost, Sonnet 4.6 selectable from the chat model switcher. Pluggable behind `app/llm.py:LLMClient`.
 
 ## Run it
 
@@ -76,6 +76,19 @@ frontend/
     ChartCard.tsx  # Plotly renderer with PNG download
   lib/api.ts       # typed API client
 ```
+
+## Models
+
+The chat panel has a model switcher with two options:
+
+| Label | Default | When to pick it |
+|---|---|---|
+| **Haiku 4.5** | yes | Descriptive Q&A, summaries, single-doc lookups. Fast and cheap. |
+| **Sonnet 4.6** | no | Numeric calculations across many rows, multi-document comparisons, anything where accuracy matters more than latency. |
+
+The selection is sent per request as `{ "model": "<id>" }` to `POST /api/chat` and persisted client-side in `localStorage` so the user's choice sticks across reloads. Backend validates the id against the allowed list (configured in `backend/app/config.py:available_models`).
+
+To change which models are exposed, edit `ANTHROPIC_MODEL` (default) and `ANTHROPIC_FALLBACK_MODEL` in `backend/.env` — no code changes needed.
 
 ## How charts work
 

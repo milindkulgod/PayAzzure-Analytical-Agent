@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import chat as chat_svc
-from .config import CORS_ORIGIN, UPLOAD_DIR
+from .config import CORS_ORIGIN, UPLOAD_DIR, available_models, is_allowed_model
 from .parsers import parse
 from .store import ChatMessage, UploadedFile, store
 
@@ -97,17 +97,25 @@ async def upload(file: UploadFile = File(...), user: str = Depends(current_user)
 
 class ChatBody(BaseModel):
     message: str
+    model: str | None = None
+
+
+@app.get("/api/models")
+def get_models(user: str = Depends(current_user)):
+    return {"models": available_models()}
 
 
 @app.post("/api/chat")
 def post_chat(body: ChatBody, user: str = Depends(current_user)):
     if not body.message.strip():
         raise HTTPException(400, "Empty message")
+    if body.model is not None and not is_allowed_model(body.model):
+        raise HTTPException(400, f"Model not allowed: {body.model}")
     session = store.session(user)
     user_msg = ChatMessage(role="user", content=body.message)
     store.add_message(user, user_msg)
     try:
-        reply = chat_svc.answer(session, body.message)
+        reply = chat_svc.answer(session, body.message, model=body.model)
     except Exception as e:
         raise HTTPException(500, f"LLM call failed: {e}")
     store.add_message(user, reply)

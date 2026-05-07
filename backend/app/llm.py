@@ -1,7 +1,7 @@
 """LLM provider interface. Pilot uses Anthropic; local-LLM impl can slot in here later."""
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Optional, Protocol
 
 from anthropic import Anthropic
 
@@ -23,7 +23,7 @@ If no documents have been uploaded, say so and ask the user to upload."""
 
 
 class LLMClient(Protocol):
-    def chat(self, system: str, messages: list[dict]) -> str: ...
+    def chat(self, system: str, messages: list[dict], model: Optional[str] = None) -> str: ...
 
 
 class AnthropicClient:
@@ -31,11 +31,11 @@ class AnthropicClient:
         if not ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and fill it in.")
         self._client = Anthropic(api_key=ANTHROPIC_API_KEY)
-        self._model = ANTHROPIC_MODEL
+        self._default_model = ANTHROPIC_MODEL
 
-    def chat(self, system: str, messages: list[dict]) -> str:
+    def chat(self, system: str, messages: list[dict], model: Optional[str] = None) -> str:
         resp = self._client.messages.create(
-            model=self._model,
+            model=model or self._default_model,
             max_tokens=4096,
             system=system,
             messages=messages,

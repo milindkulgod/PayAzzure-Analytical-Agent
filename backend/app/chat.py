@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Optional
 
 from .llm import SYSTEM_PROMPT, get_client
 from .store import ChatMessage, Session
@@ -45,8 +46,8 @@ def extract_charts(text: str) -> tuple[str, list[dict]]:
     return cleaned, charts
 
 
-def answer(session: Session, user_message: str) -> ChatMessage:
+def answer(session: Session, user_message: str, model: Optional[str] = None) -> ChatMessage:
     client = get_client()
-    raw = client.chat(SYSTEM_PROMPT, build_messages(session, user_message))
+    raw = client.chat(SYSTEM_PROMPT, build_messages(session, user_message), model=model)
     text, charts = extract_charts(raw)
     return ChatMessage(role="assistant", content=text, charts=charts)
