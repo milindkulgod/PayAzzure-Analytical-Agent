@@ -1,11 +1,16 @@
-"""Document parsing. Returns extracted text and (for spreadsheets) lightweight table summaries."""
+"""Document parsing. Returns extracted text and (for spreadsheets) lightweight table summaries.
+
+Pure-Python deps only — no native compile chain required.
+"""
 from __future__ import annotations
 
+import csv
+import io
 from pathlib import Path
 
 import pdfplumber
-import pandas as pd
 from docx import Document
+from openpyxl import load_workbook
 
 
 MAX_TEXT_CHARS = 200_000  # hard cap per file to keep prompts manageable
@@ -43,22 +48,55 @@ def _docx(path: Path) -> str:
 
 
 def _xlsx(path: Path) -> tuple[str, list[dict]]:
-    sheets = pd.read_excel(path, sheet_name=None, engine="openpyxl")
+    wb = load_workbook(filename=str(path), data_only=True, read_only=True)
     text_parts: list[str] = []
     table_summaries: list[dict] = []
-    for name, df in sheets.items():
-        df = df.dropna(how="all").dropna(axis=1, how="all")
-        preview = df.head(50).to_csv(index=False)
-        text_parts.append(f"--- Sheet: {name} ---\nShape: {df.shape}\nColumns: {list(df.columns)}\n\n{preview}")
-        table_summaries.append(
-            {
-                "sheet": name,
-                "rows": int(df.shape[0]),
-                "cols": int(df.shape[1]),
-                "columns": [str(c) for c in df.columns],
-            }
-        )
+    try:
+        for name in wb.sheetnames:
+            ws = wb[name]
+            rows = [
+                r for r in ws.iter_rows(values_only=True)
+                if any(c is not None and str(c).strip() != "" for c in r)
+            ]
+            if not rows:
+                continue
+            keep = _non_empty_columns(rows)
+            filtered = [[r[i] if i < len(r) else None for i in keep] for r in rows]
+            header = filtered[0]
+            columns = [
+                str(c) if c is not None else f"col_{i + 1}"
+                for i, c in enumerate(header)
+            ]
+            n_rows = len(filtered) - 1  # exclude header row
+            n_cols = len(columns)
+
+            buf = io.StringIO()
+            writer = csv.writer(buf)
+            for r in filtered[:50]:
+                writer.writerow(["" if c is None else c for c in r])
+            preview = buf.getvalue()
+
+            text_parts.append(
+                f"--- Sheet: {name} ---\n"
+                f"Shape: ({n_rows}, {n_cols})\n"
+                f"Columns: {columns}\n\n{preview}"
+            )
+            table_summaries.append(
+                {"sheet": name, "rows": n_rows, "cols": n_cols, "columns": columns}
+            )
+    finally:
+        wb.close()
     return _trim("\n\n".join(text_parts)), table_summaries
+
+
+def _non_empty_columns(rows: list[tuple]) -> list[int]:
+    max_cols = max(len(r) for r in rows)
+    has_value = [False] * max_cols
+    for r in rows:
+        for i in range(len(r)):
+            if r[i] is not None and str(r[i]).strip() != "":
+                has_value[i] = True
+    return [i for i, v in enumerate(has_value) if v]
 
 
 def _trim(s: str) -> str:

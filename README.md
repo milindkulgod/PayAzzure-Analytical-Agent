@@ -31,6 +31,8 @@ You'll need Python 3.11+ and Node 18+.
 
 ### 1. Backend
 
+#### macOS / Linux
+
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
@@ -39,6 +41,26 @@ cp .env.example .env
 # edit .env and set ANTHROPIC_API_KEY
 uvicorn app.main:app --reload --port 8000
 ```
+
+#### Windows (PowerShell)
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+# edit .env and set ANTHROPIC_API_KEY
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+If PowerShell blocks `Activate.ps1` ("running scripts is disabled"), unblock for the current session:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+**Python version note:** stick to Python 3.10–3.12. On Python 3.14 some scientific deps may not yet ship Windows wheels and pip will try to compile from source (which needs Visual Studio Build Tools). Recommended: `py -3.12 -m venv .venv` if you have multiple Pythons installed.
 
 ### 2. Frontend
 
