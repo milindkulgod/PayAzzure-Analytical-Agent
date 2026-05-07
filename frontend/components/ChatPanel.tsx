@@ -1,23 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   getModels,
   resetChat,
   sendChat,
   type ChatMessage,
+  type ChartSpec,
   type ModelOption,
 } from "@/lib/api";
-import { ChartCard } from "./ChartCard";
 
 const MODEL_PREF_KEY = "preferred_model";
 
 export function ChatPanel({
   initial,
   onChartsUpdated,
+  onViewDashboard,
 }: {
   initial: ChatMessage[];
-  onChartsUpdated: (charts: { spec: any; from: string }[]) => void;
+  onChartsUpdated: (charts: { spec: ChartSpec; from: string }[]) => void;
+  onViewDashboard: () => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initial);
   const [input, setInput] = useState("");
@@ -99,9 +103,13 @@ export function ChatPanel({
           </p>
         )}
         {messages.map((m, i) => (
-          <MessageBubble key={i} msg={m} />
+          <MessageBubble key={i} msg={m} onViewDashboard={onViewDashboard} />
         ))}
-        {busy && <p className="text-sm text-muted">Thinking…</p>}
+        {busy && (
+          <p className="text-sm text-muted flex items-center gap-2">
+            <span className="spinner" /> Thinking…
+          </p>
+        )}
         <div ref={endRef} />
       </div>
       <div className="border-t border-border p-3 space-y-2">
@@ -127,7 +135,7 @@ export function ChatPanel({
           <label className="flex items-center gap-2 text-xs text-muted">
             Model
             <select
-              className="bg-panel border border-border rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-accent"
+              className="bg-panel border border-border rounded-md px-2 py-1 text-xs text-fg focus:outline-none focus:border-accent"
               value={model}
               onChange={(e) => onModelChange(e.target.value)}
               disabled={busy || models.length === 0}
@@ -148,25 +156,41 @@ export function ChatPanel({
   );
 }
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({
+  msg,
+  onViewDashboard,
+}: {
+  msg: ChatMessage;
+  onViewDashboard: () => void;
+}) {
   const isUser = msg.role === "user";
+  const chartCount = msg.charts?.length ?? 0;
+
   return (
     <div className={isUser ? "text-right" : "text-left"}>
       <div
         className={
-          "inline-block max-w-[90%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap " +
-          (isUser ? "bg-accent text-black" : "bg-bg border border-border")
+          "inline-block max-w-[90%] rounded-lg px-3 py-2 text-left " +
+          (isUser
+            ? "bg-accent text-white whitespace-pre-wrap text-sm"
+            : "bg-bg border border-border")
         }
       >
-        {msg.content}
+        {isUser ? (
+          msg.content
+        ) : (
+          <div className="markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+          </div>
+        )}
+        {!isUser && chartCount > 0 && (
+          <div className="mt-2">
+            <button className="btn-ghost text-xs" onClick={onViewDashboard}>
+              View {chartCount} chart{chartCount === 1 ? "" : "s"} on Dashboard →
+            </button>
+          </div>
+        )}
       </div>
-      {!isUser && msg.charts?.length > 0 && (
-        <div className="mt-2">
-          {msg.charts.map((spec, i) => (
-            <ChartCard key={i} spec={spec} index={i} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

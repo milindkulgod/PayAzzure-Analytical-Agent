@@ -2,9 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+html[data-theme="light"] {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --border: #e2e6ee;
+  --accent: #4263eb;
+  --muted: #6b7280;
+  --text: #1a1d24;
+  --shadow: 0 1px 2px rgba(20, 24, 34, 0.05);
+}
+
+html[data-theme="dark"] {
+  --bg: #0b0d12;
+  --panel: #141822;
+  --border: #222837;
+  --accent: #7c9cff;
+  --muted: #8a93a6;
+  --text: #e6e8ee;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 html, body {
-  background: #0b0d12;
-  color: #e6e8ee;
+  background: var(--bg);
+  color: var(--text);
   height: 100%;
 }
 
@@ -16,15 +37,112 @@ body {
   @apply inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition;
 }
 .btn-primary {
-  @apply btn bg-accent text-black hover:opacity-90;
+  @apply btn bg-accent text-white hover:opacity-90 disabled:opacity-50;
 }
 .btn-ghost {
-  @apply btn bg-transparent border border-border text-white hover:bg-panel;
+  @apply btn bg-transparent border border-border text-fg hover:bg-panel disabled:opacity-50;
 }
 
 .card {
   @apply bg-panel border border-border rounded-lg;
+  box-shadow: var(--shadow);
 }
 .input {
-  @apply bg-panel border border-border rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-accent;
+  @apply bg-panel border border-border rounded-md px-3 py-2 text-sm w-full text-fg focus:outline-none focus:border-accent;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium rounded-md transition border border-transparent;
+  color: var(--muted);
+}
+.tab[data-active="true"] {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.markdown {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.markdown > *:first-child { margin-top: 0; }
+.markdown > *:last-child { margin-bottom: 0; }
+.markdown p { margin: 0.4rem 0; }
+.markdown ul { list-style: disc; padding-left: 1.25rem; margin: 0.4rem 0; }
+.markdown ol { list-style: decimal; padding-left: 1.25rem; margin: 0.4rem 0; }
+.markdown li { margin: 0.15rem 0; }
+.markdown strong { font-weight: 600; }
+.markdown em { font-style: italic; }
+.markdown code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+}
+.markdown pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  margin: 0.5rem 0;
+}
+.markdown pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.markdown h1, .markdown h2, .markdown h3, .markdown h4 {
+  font-weight: 600;
+  margin: 0.6rem 0 0.3rem;
+  line-height: 1.25;
+}
+.markdown h1 { font-size: 1.05rem; }
+.markdown h2 { font-size: 1rem; }
+.markdown h3 { font-size: 0.95rem; }
+.markdown h4 { font-size: 0.9rem; }
+.markdown blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted);
+  margin: 0.4rem 0;
+}
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0.75rem 0;
+}
+.markdown table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+.markdown th, .markdown td {
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  font-size: 0.85em;
+}
+.markdown th {
+  background: var(--bg);
+}
+.markdown a {
+  color: var(--accent);
+  text-decoration: underline;
 }
