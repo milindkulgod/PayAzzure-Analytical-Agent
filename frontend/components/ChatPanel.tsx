@@ -172,9 +172,10 @@ function MessageBubble({
         className={
           "inline-block max-w-[90%] rounded-lg px-3 py-2 text-left " +
           (isUser
-            ? "bg-accent text-white whitespace-pre-wrap text-sm"
+            ? "bg-accent whitespace-pre-wrap text-sm"
             : "bg-bg border border-border")
         }
+        style={isUser ? { color: "var(--accent-fg)" } : undefined}
       >
         {isUser ? (
           msg.content

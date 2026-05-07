@@ -78,6 +78,18 @@ class Store:
             self._sessions[email].files.append(f)
             self._persist(email)
 
+    def delete_file(self, email: str, file_id: str) -> Optional[UploadedFile]:
+        with self._lock:
+            s = self._sessions.get(email)
+            if not s:
+                return None
+            for i, f in enumerate(s.files):
+                if f.file_id == file_id:
+                    removed = s.files.pop(i)
+                    self._persist(email)
+                    return removed
+        return None
+
     def add_message(self, email: str, m: ChatMessage) -> None:
         with self._lock:
             self._sessions[email].messages.append(m)

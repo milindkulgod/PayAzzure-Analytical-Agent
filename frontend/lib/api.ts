@@ -71,6 +71,14 @@ export async function getSession() {
   return handle<SessionPayload>(r);
 }
 
+export async function deleteFile(fileId: string) {
+  const r = await fetch(`${BASE}/api/files/${encodeURIComponent(fileId)}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return handle<{ ok: true }>(r);
+}
+
 export async function uploadFile(file: File) {
   const fd = new FormData();
   fd.append("file", file);

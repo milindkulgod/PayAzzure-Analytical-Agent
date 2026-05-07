@@ -142,7 +142,10 @@ function StatusIcon({ status }: { status: Status }) {
   if (status === "pending") return <span className="spinner" />;
   if (status === "success")
     return (
-      <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[10px]" style={{ background: "var(--accent)", color: "white" }}>
+      <span
+        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[10px]"
+        style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
+      >
         ✓
       </span>
     );

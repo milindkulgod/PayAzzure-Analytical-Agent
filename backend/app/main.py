@@ -64,6 +64,18 @@ def get_session(user: str = Depends(current_user)):
     return _session_payload(store.session(user))
 
 
+@app.delete("/api/files/{file_id}")
+def delete_file(file_id: str, user: str = Depends(current_user)):
+    removed = store.delete_file(user, file_id)
+    if not removed:
+        raise HTTPException(404, "File not found")
+    try:
+        Path(removed.path).unlink(missing_ok=True)
+    except Exception:
+        pass
+    return {"ok": True}
+
+
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...), user: str = Depends(current_user)):
     suffix = Path(file.filename or "").suffix.lower()

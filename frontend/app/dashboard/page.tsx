@@ -47,6 +47,10 @@ export default function DashboardPage() {
     setFiles((prev) => [...prev, f]);
   }, []);
 
+  const onDeleted = useCallback((fileId: string) => {
+    setFiles((prev) => prev.filter((f) => f.file_id !== fileId));
+  }, []);
+
   const onChartsUpdated = useCallback((c: { spec: ChartSpec; from: string }[]) => {
     setCharts(c);
   }, []);
@@ -101,7 +105,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-12 gap-4 h-[calc(100vh-9rem)]">
             <aside className="col-span-12 lg:col-span-3 space-y-4 overflow-y-auto">
               <UploadZone onUploaded={onUploaded} />
-              <FileList files={files} />
+              <FileList files={files} onDeleted={onDeleted} />
             </aside>
             <section className="col-span-12 lg:col-span-9 h-full">
               <ChatPanel
