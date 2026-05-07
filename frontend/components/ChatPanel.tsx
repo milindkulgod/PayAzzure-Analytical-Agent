@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -8,22 +8,20 @@ import {
   resetChat,
   sendChat,
   type ChatMessage,
-  type ChartSpec,
   type ModelOption,
 } from "@/lib/api";
 
 const MODEL_PREF_KEY = "preferred_model";
 
 export function ChatPanel({
-  initial,
-  onChartsUpdated,
+  messages,
+  onMessagesChange,
   onViewDashboard,
 }: {
-  initial: ChatMessage[];
-  onChartsUpdated: (charts: { spec: ChartSpec; from: string }[]) => void;
+  messages: ChatMessage[];
+  onMessagesChange: Dispatch<SetStateAction<ChatMessage[]>>;
   onViewDashboard: () => void;
 }) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initial);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [models, setModels] = useState<ModelOption[]>([]);
@@ -46,15 +44,6 @@ export function ChatPanel({
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
-  useEffect(() => {
-    const all = messages
-      .filter((m) => m.role === "assistant")
-      .flatMap((m, i) =>
-        (m.charts ?? []).map((c) => ({ spec: c, from: `Reply ${i + 1}` })),
-      );
-    onChartsUpdated(all);
-  }, [messages, onChartsUpdated]);
-
   function onModelChange(id: string) {
     setModel(id);
     if (typeof window !== "undefined") localStorage.setItem(MODEL_PREF_KEY, id);
@@ -65,13 +54,13 @@ export function ChatPanel({
     if (!text || busy) return;
     setInput("");
     const userMsg: ChatMessage = { role: "user", content: text, charts: [] };
-    setMessages((m) => [...m, userMsg]);
+    onMessagesChange((m) => [...m, userMsg]);
     setBusy(true);
     try {
       const { message } = await sendChat(text, model || undefined);
-      setMessages((m) => [...m, message]);
+      onMessagesChange((m) => [...m, message]);
     } catch (e: any) {
-      setMessages((m) => [
+      onMessagesChange((m) => [
         ...m,
         { role: "assistant", content: `Error: ${e?.message ?? "request failed"}`, charts: [] },
       ]);
@@ -82,7 +71,7 @@ export function ChatPanel({
 
   async function clear() {
     await resetChat();
-    setMessages([]);
+    onMessagesChange([]);
   }
 
   const activeModel = models.find((m) => m.id === model);

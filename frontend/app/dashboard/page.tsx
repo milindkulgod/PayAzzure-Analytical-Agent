@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getEmail,
@@ -24,9 +24,21 @@ export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [files, setFiles] = useState<FileMeta[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [charts, setCharts] = useState<{ spec: ChartSpec; from: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("chat");
+
+  const charts = useMemo<{ spec: ChartSpec; from: string }[]>(() => {
+    const out: { spec: ChartSpec; from: string }[] = [];
+    let replyIdx = 0;
+    for (const m of messages) {
+      if (m.role !== "assistant") continue;
+      replyIdx += 1;
+      for (const spec of m.charts ?? []) {
+        out.push({ spec, from: `Reply ${replyIdx}` });
+      }
+    }
+    return out;
+  }, [messages]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -49,10 +61,6 @@ export default function DashboardPage() {
 
   const onDeleted = useCallback((fileId: string) => {
     setFiles((prev) => prev.filter((f) => f.file_id !== fileId));
-  }, []);
-
-  const onChartsUpdated = useCallback((c: { spec: ChartSpec; from: string }[]) => {
-    setCharts(c);
   }, []);
 
   const goDashboard = useCallback(() => setTab("dashboard"), []);
@@ -109,8 +117,8 @@ export default function DashboardPage() {
             </aside>
             <section className="col-span-12 lg:col-span-9 h-full">
               <ChatPanel
-                initial={messages}
-                onChartsUpdated={onChartsUpdated}
+                messages={messages}
+                onMessagesChange={setMessages}
                 onViewDashboard={goDashboard}
               />
             </section>
