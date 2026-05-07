@@ -83,8 +83,8 @@ export function ChartCard({ spec, index }: { spec: ChartSpec; index: number }) {
 
   return (
     <>
-      <div className="card p-3 space-y-2">
-        <div ref={containerRef} className="chart-resizable">
+      <div ref={containerRef} className="card chart-resizable flex flex-col gap-2 p-3">
+        <div className="flex-1 min-h-0">
           <Plot
             ref={plotRef}
             data={spec.data}
@@ -94,7 +94,7 @@ export function ChartCard({ spec, index }: { spec: ChartSpec; index: number }) {
             config={{ displayModeBar: false, responsive: true }}
           />
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 shrink-0">
           <button
             className="icon-btn-sm"
             onClick={() => setExpanded(true)}
