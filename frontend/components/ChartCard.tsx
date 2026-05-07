@@ -34,6 +34,9 @@ function useTheme(): "dark" | "light" {
 
 function buildLayout(spec: ChartSpec, theme: "dark" | "light") {
   const palette = PALETTES[theme];
+  // Strip any explicit width/height the model emitted; autosize must win so
+  // the chart shrinks/grows with the resizable container.
+  const { width: _w, height: _h, ...rest } = spec.layout || {};
   return {
     paper_bgcolor: palette.paper,
     plot_bgcolor: palette.paper,
@@ -41,7 +44,7 @@ function buildLayout(spec: ChartSpec, theme: "dark" | "light") {
     xaxis: { gridcolor: palette.grid, zerolinecolor: palette.grid, color: palette.text },
     yaxis: { gridcolor: palette.grid, zerolinecolor: palette.grid, color: palette.text },
     margin: { t: 40, r: 20, b: 40, l: 50 },
-    ...spec.layout,
+    ...rest,
     autosize: true,
   };
 }
