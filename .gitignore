@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+out/
+.DS_Store
+*.log
+
+# Pilot runtime data (uploads + sessions)
+backend/data/
+data/
+
+# Editors
+.vscode/
+.idea/
